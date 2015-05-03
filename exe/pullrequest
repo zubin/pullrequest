@@ -1,0 +1,36 @@
+#!/usr/bin/env ruby
+
+lib = File.expand_path('../../lib', __FILE__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+
+require 'pullrequest'
+require 'pullrequest/thor'
+
+module Pullrequest
+  class CLI < Thor
+    include Pullrequest::Shell
+
+    no_commands do
+      def command
+        @command ||= repo_class.new(self).command
+      end
+
+      def repo_class
+        Bitbucket
+      end
+    end
+
+    desc "submit", "Submits pull request"
+    def submit
+      command
+      if yes? "Print command?"
+        $stdout.puts command
+      end
+      if yes? "Proceed?"
+        execute command
+      end
+    end
+  end
+end
+
+Pullrequest::CLI.start(ARGV)
