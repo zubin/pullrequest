@@ -15,7 +15,6 @@ The command will be shown before asking confirmation to execute it.
 
 ## TODO
 
-* Add `pullrequest` to path
 * Add review option at confirmation (start again with previous answers as defaults).
 * Optionally cache Bitbucket credentials.
 * Add GitHub support.
