@@ -1,5 +1,7 @@
+require 'fileutils'
 require 'json'
 require 'thor'
+require 'yaml'
 
 module Pullrequest
   class Bitbucket
@@ -84,8 +86,13 @@ module Pullrequest
     end
 
     def password
-      ask("Your Bitbucket password", echo: false, required: true).tap do
+      return stored_credentials[:password] if stored_credentials?
+      ask("Your Bitbucket password", echo: false, required: true).tap do |password|
         $stdout.puts # force newline
+        if yes? "Store credentials for next time? (in #{stored_credentials_path})"
+          @password = password
+          write_credentials
+        end
       end
     end
 
@@ -97,6 +104,19 @@ module Pullrequest
       current_repo
     end
 
+    def stored_credentials
+      return {} unless File.exists?(stored_credentials_path)
+      @stored_credentials ||= YAML.load(File.read(stored_credentials_path))
+    end
+
+    def stored_credentials?
+      stored_credentials.key?(:username) && stored_credentials.key?(:password)
+    end
+
+    def stored_credentials_path
+      File.join(Dir.home, '.config/pullrequest/bitbucket.yml')
+    end
+
     def title
       ask("Title of pull request", required: true)
     end
@@ -106,7 +126,19 @@ module Pullrequest
     end
 
     def username
-      ask "Your Bitbucket username", required: true
+      return stored_credentials[:username] if stored_credentials?
+      @username = ask("Your Bitbucket username", required: true)
+    end
+
+    def write_credentials
+      FileUtils.mkdir_p(File.dirname(stored_credentials_path))
+      File.open(stored_credentials_path, 'w', 0600) do |f|
+        f.write({username: @username, password: @password}.to_yaml)
+      end
+    end
+
+    def yes?(*args)
+      context.yes? *args
     end
   end
 end
