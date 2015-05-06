@@ -13,12 +13,6 @@ CLI for submitting Bitbucket pull requests
 You will be prompted to enter details for your pull request.
 The command will be shown before asking confirmation to execute it.
 
-## TODO
-
-* Add review option at confirmation (start again with previous answers as defaults).
-* Optionally cache Bitbucket credentials.
-* Add GitHub support.
-
 ## Contributing
 
 1. Fork it ( https://github.com/zubin/pullrequest/fork )
