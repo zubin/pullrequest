@@ -13,6 +13,8 @@ Thor::Shell::Basic.class_eval do
         raise Thor::RequiredArgumentMissingError
       end
       response
+    rescue Interrupt
+      exit_gracefully
     rescue Thor::RequiredArgumentMissingError
       say "Error: required", :red
       retry
@@ -21,15 +23,24 @@ Thor::Shell::Basic.class_eval do
 
   def no?(statement, color = nil)
     ask_bool('n', statement, color)
+  rescue Interrupt
+    exit_gracefully
   end
 
   def yes?(statement, color = nil)
     ask_bool('y', statement, color)
+  rescue Interrupt
+    exit_gracefully
   end
 
   private
 
   def ask_bool(y_or_n, statement, color)
     ask_original(statement, color, add_to_history: false, limited_to: %w[yes no y n])[0] == y_or_n
+  end
+
+  def exit_gracefully
+    say "[cancelled]", :red
+    exit 0
   end
 end
