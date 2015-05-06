@@ -9,26 +9,36 @@ require 'pullrequest/thor'
 module Pullrequest
   class CLI < Thor
     include Pullrequest::Shell
+    Aborted = Class.new(StandardError)
 
-    no_commands do
-      def command
-        @command ||= repo_class.new(self).command
-      end
-
-      def repo_class
-        Bitbucket
+    desc "submit", "Submits Bitbucket pull request"
+    def submit
+      begin
+        command
+        if yes? "Print command?"
+          $stdout.puts command
+        end
+        if yes? "Proceed?"
+          execute command
+        else
+          raise Aborted
+        end
+      rescue Aborted
+        if yes? "Review?"
+          pullrequest.review
+          retry
+        end
       end
     end
 
-    desc "submit", "Submits pull request"
-    def submit
-      command
-      if yes? "Print command?"
-        $stdout.puts command
-      end
-      if yes? "Proceed?"
-        execute command
-      end
+    private
+
+    def command
+      pullrequest.command
+    end
+
+    def pullrequest
+      @pullrequest ||= Bitbucket.new(self)
     end
   end
 end

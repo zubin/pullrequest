@@ -10,21 +10,28 @@ module Pullrequest
     end
 
     def command
-      data # ask these questions first
-      [
-        "curl",
-        "-X POST",
-        "-H 'Content-Type: application/json'",
-        "-u #{username}:#{password}",
-        "https://bitbucket.org/api/2.0/repositories/#{dest_repo}/pullrequests",
-        "-d '#{data.to_json}'",
-      ].join(' ')
+      @command ||= generate_command
+    end
+
+    def review
+      @data = nil
+      @command = nil
     end
 
     private
 
-    def ask(*args)
-      context.ask *args
+    def ask(question, options = {})
+      cache_key = question.dup
+      if cached_answers[cache_key]
+        options.merge! default: cached_answers[cache_key]
+      end
+      context.ask(question, options).tap do |answer|
+        cached_answers[cache_key] = answer
+      end
+    end
+
+    def cached_answers
+      @cached_answers ||= {}
     end
 
     def current_branch
@@ -37,8 +44,8 @@ module Pullrequest
 
     def data
       @data ||= {
-        title: ask("Title of pull request", required: true),
-        description: ask("Description of pull request"),
+        title: title,
+        description: description,
         source: {
           repository: {full_name: source_repo},
           branch: {name: source_branch},
@@ -52,12 +59,28 @@ module Pullrequest
       }
     end
 
+    def description
+      ask("Description of pull request")
+    end
+
     def dest_branch
       ask("Destination branch", default: 'master', required: true)
     end
 
     def dest_repo
       ask("Destination Bitbucket repo (account_name/report_name)", default: current_repo, required: true)
+    end
+
+    def generate_command
+      data # ask these questions first
+      [
+        "curl",
+        "-X POST",
+        "-H 'Content-Type: application/json'",
+        "-u #{username}:#{password}",
+        "https://bitbucket.org/api/2.0/repositories/#{dest_repo}/pullrequests",
+        "-d '#{data.to_json}'",
+      ].join(' ')
     end
 
     def password
@@ -72,6 +95,10 @@ module Pullrequest
 
     def source_repo
       current_repo
+    end
+
+    def title
+      ask("Title of pull request", required: true)
     end
 
     def reviewer_usernames
