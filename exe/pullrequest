@@ -43,4 +43,4 @@ module Pullrequest
   end
 end
 
-Pullrequest::CLI.start(ARGV)
+Pullrequest::CLI.start(ARGV.empty? ? ['submit'] : ARGV)
